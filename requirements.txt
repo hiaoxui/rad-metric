@@ -1,0 +1,8 @@
+torch
+numpy<2.0.0
+transformers
+fast-bleu
+bert-score
+tqdm
+ray
+statsmodels=0.14.4
