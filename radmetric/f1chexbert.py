@@ -16,6 +16,13 @@ from sklearn.metrics._classification import _check_targets
 REPO_ID = 'StanfordAIMI/RRG_scorers'
 FILE_NAME = 'chexbert.pth'
 
+TARGET_NAMES = [
+    "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
+    "Consolidation", "Pneumonia", "Atelectasis", "Pneumothorax", "Pleural Effusion", "Pleural Other",
+    "Fracture", "Support Devices", "No Finding",
+]
+TARGET_NAMES_5 = ["Cardiomegaly", "Edema", "Consolidation", "Atelectasis", "Pleural Effusion"]
+TARGET_NAMES_5_INDEX = np.where(np.isin(TARGET_NAMES, TARGET_NAMES_5))[0]
 
 class BertLabeler(nn.Module):
     def __init__(self, p=0.1, clinical=False, freeze_embeddings=False, pretrain_path=None, inference=False, **kwargs):
@@ -92,15 +99,6 @@ class F1CheXbert(nn.Module):
         self.model = self.model.to(self.device)
         self.model = self.model.eval()
 
-        # Defining classes
-        self.target_names = [
-            "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
-            "Consolidation", "Pneumonia", "Atelectasis", "Pneumothorax", "Pleural Effusion", "Pleural Other",
-            "Fracture", "Support Devices", "No Finding"]
-
-        self.target_names_5 = ["Cardiomegaly", "Edema", "Consolidation", "Atelectasis", "Pleural Effusion"]
-        self.target_names_5_index = np.where(np.isin(self.target_names, self.target_names_5))[0]
-
     @staticmethod
     def _clean_text(text: str):
         if not isinstance(text, str):
@@ -163,9 +161,12 @@ class F1CheXbert(nn.Module):
         hyp_labels = labels[:len(hyps)]
         ref_labels = labels[len(hyps):]
 
-        refs_chexbert_5 = [np.array(r)[self.target_names_5_index] for r in ref_labels]
-        hyps_chexbert_5 = [np.array(h)[self.target_names_5_index] for h in hyp_labels]
+        refs_chexbert_5 = [np.array(r)[TARGET_NAMES_5] for r in ref_labels]
+        hyps_chexbert_5 = [np.array(h)[TARGET_NAMES_5] for h in hyp_labels]
+        return refs_chexbert_5, hyps_chexbert_5, ref_labels, hyp_labels
 
+    @staticmethod
+    def report_results(refs_chexbert_5, hyps_chexbert_5, ref_labels, hyp_labels):
         accuracy = accuracy_score(y_true=refs_chexbert_5, y_pred=hyps_chexbert_5)
         y_type, y_true, y_pred = _check_targets(refs_chexbert_5, hyps_chexbert_5)
         # Accuracy
@@ -176,13 +177,13 @@ class F1CheXbert(nn.Module):
         cr = classification_report(
             y_true=ref_labels,
             y_pred=hyp_labels,
-            target_names=self.target_names,
+            target_names=TARGET_NAMES,
             output_dict=True
         )
         cr_5 = classification_report(
             y_true=refs_chexbert_5,
             y_pred=hyps_chexbert_5,
-            target_names=self.target_names_5,
+            target_names=TARGET_NAMES_5,
             output_dict=True
         )
 
