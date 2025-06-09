@@ -1,5 +1,5 @@
 # This file is modified from f1chexbert
-from typing import List
+from typing import List, Tuple
 import re
 from collections import OrderedDict
 
@@ -16,13 +16,13 @@ from sklearn.metrics._classification import _check_targets
 REPO_ID = 'StanfordAIMI/RRG_scorers'
 FILE_NAME = 'chexbert.pth'
 
-TARGET_NAMES = [
+TARGET_NAMES_12 = [
     "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
     "Consolidation", "Pneumonia", "Atelectasis", "Pneumothorax", "Pleural Effusion", "Pleural Other",
     "Fracture", "Support Devices", "No Finding",
 ]
 TARGET_NAMES_5 = ["Cardiomegaly", "Edema", "Consolidation", "Atelectasis", "Pleural Effusion"]
-TARGET_NAMES_5_INDEX = np.where(np.isin(TARGET_NAMES, TARGET_NAMES_5))[0]
+TARGET_NAMES_5_INDEX = np.where(np.isin(TARGET_NAMES_12, TARGET_NAMES_5))[0]
 
 class BertLabeler(nn.Module):
     def __init__(self, p=0.1, clinical=False, freeze_embeddings=False, pretrain_path=None, inference=False, **kwargs):
@@ -154,35 +154,47 @@ class F1CheXbert(nn.Module):
         return v
 
     @torch.inference_mode()
-    def batch_run(self, hyps: List[str], refs: List[str], mode="rrg"):
+    def batch_run(self, hyps: List[str], refs: List[str], mode="rrg") -> Tuple[List[int], List[int]]:
         assert len(hyps) == len(refs), "hypotheses and references must be same length"
         texts = hyps + refs
         labels = self.get_label(texts, mode=mode)
-        hyp_labels = labels[:len(hyps)]
-        ref_labels = labels[len(hyps):]
-
-        refs_chexbert_5 = [np.array(r)[TARGET_NAMES_5] for r in ref_labels]
-        hyps_chexbert_5 = [np.array(h)[TARGET_NAMES_5] for h in hyp_labels]
-        return refs_chexbert_5, hyps_chexbert_5, ref_labels, hyp_labels
+        hyps12 = labels[:len(hyps)]
+        refs12 = labels[len(hyps):]
+        # return all 12 classes
+        return refs12, hyps12
 
     @staticmethod
-    def report_results(refs_chexbert_5, hyps_chexbert_5, ref_labels, hyp_labels):
-        accuracy = accuracy_score(y_true=refs_chexbert_5, y_pred=hyps_chexbert_5)
-        y_type, y_true, y_pred = _check_targets(refs_chexbert_5, hyps_chexbert_5)
+    def report_individual(refs12: List[int], hyps12: List[int]):
+        # report f1/acc score and accuracy for individual predictions
+        assert len(refs12) == len(hyps12), "hypotheses and references must be same length"
+        metrics = []
+        for ref12, hyp12 in zip(refs12, hyps12):
+            accuracy, pe_accuracy, cr, cr_5 = F1CheXbert.report_results([ref12], [hyp12])
+            metrics.append([accuracy, pe_accuracy, cr, cr_5])
+        return metrics
+
+    @staticmethod
+    def report_results(refs12: List[int], hyps12: List[int]):
+        # report f1 score and accuracy over all predictions
+        assert len(refs12) == len(hyps12), "hypotheses and references must be same length"
+        refs5 = [np.array(r)[TARGET_NAMES_5_INDEX] for r in refs12]
+        hyps5 = [np.array(h)[TARGET_NAMES_5_INDEX] for h in hyps12]
+        accuracy = accuracy_score(y_true=refs5, y_pred=hyps5)
+        y_type, y_true, y_pred = _check_targets(refs5, hyps5)
         # Accuracy
         # Per element accuracy
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         pe_accuracy = (differing_labels == 0).astype(np.float32)
 
         cr = classification_report(
-            y_true=ref_labels,
-            y_pred=hyp_labels,
-            target_names=TARGET_NAMES,
+            y_true=refs12,
+            y_pred=hyps12,
+            target_names=TARGET_NAMES_12,
             output_dict=True
         )
         cr_5 = classification_report(
-            y_true=refs_chexbert_5,
-            y_pred=hyps_chexbert_5,
+            y_true=refs5,
+            y_pred=hyps5,
             target_names=TARGET_NAMES_5,
             output_dict=True
         )
