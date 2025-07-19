@@ -15,9 +15,8 @@ class F1CheXbertWorker:
         return self.model.batch_run(hyps=hyps, refs=refs)
 
 
-class F1CheXbertRewardServer(RewardServer):
+class F1CheXbertMetric(RewardServer):
     def __init__(self, num_workers: Optional[int] = None, batch_size: int = 8):
-        ray.init(ignore_reinit_error=True)
         self.batch_size = batch_size
         super().__init__(num_workers=num_workers)
 

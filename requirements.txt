@@ -1,8 +1,12 @@
-torch
-numpy<2.0.0
-transformers
-fast-bleu
+torch>=2.1.0
+numpy
+transformers>=4.39.0
+evaluate
 bert-score
 tqdm
 ray
-statsmodels=0.14.4
+pandas
+radgraph==0.1.18
+RaTEScore==0.6.0
+statsmodels==0.14.4
+medspacy==1.3.1

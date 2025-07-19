@@ -1,5 +1,4 @@
 import ray
-from bert_score import BERTScorer
 
 from .reward_server import RewardServer
 
@@ -12,6 +11,7 @@ class BERTScoreWorker:
         batch_size=16,
         model_type="distilroberta-base",
     ):
+        from bert_score import BERTScorer
         self.scorer = BERTScorer(
             model_type=model_type,
             batch_size=batch_size,
@@ -26,7 +26,7 @@ class BERTScoreWorker:
         return f1.numpy()
 
 
-class BERTScoreServer(RewardServer):
+class BERTScoreMetric(RewardServer):
     def __init__(
         self,
         num_workers=None,
@@ -34,7 +34,6 @@ class BERTScoreServer(RewardServer):
         model_type="distilroberta-base",
         lang="en"
     ):
-        ray.init(ignore_reinit_error=True)
         self.batch_size = batch_size
         self.model_type = model_type
         self.lang = lang

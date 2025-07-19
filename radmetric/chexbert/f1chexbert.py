@@ -190,13 +190,15 @@ class F1CheXbert(nn.Module):
             y_true=refs12,
             y_pred=hyps12,
             target_names=TARGET_NAMES_12,
-            output_dict=True
+            output_dict=True,
+            zero_division=1.0,
         )
         cr_5 = classification_report(
             y_true=refs5,
             y_pred=hyps5,
             target_names=TARGET_NAMES_5,
-            output_dict=True
+            output_dict=True,
+            zero_division=1.0,
         )
 
         return accuracy, pe_accuracy, cr, cr_5
