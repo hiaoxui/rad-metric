@@ -12,12 +12,8 @@ Supported metrics:
 
 ## Setup
 
-Run the following script to setup environment:
-
 ```bash
-conda create -n rad python=3.12
-conda activate rad
-pip3 install -r requirements.txt
+pip install rad-metric
 ```
 
 ## Usage
