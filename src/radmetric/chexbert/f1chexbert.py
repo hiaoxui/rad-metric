@@ -16,13 +16,13 @@ from sklearn.metrics._classification import _check_targets
 REPO_ID = 'StanfordAIMI/RRG_scorers'
 FILE_NAME = 'chexbert.pth'
 
-TARGET_NAMES_12 = [
+TARGET_NAMES_14 = [
     "Enlarged Cardiomediastinum", "Cardiomegaly", "Lung Opacity", "Lung Lesion", "Edema",
     "Consolidation", "Pneumonia", "Atelectasis", "Pneumothorax", "Pleural Effusion", "Pleural Other",
     "Fracture", "Support Devices", "No Finding",
 ]
 TARGET_NAMES_5 = ["Cardiomegaly", "Edema", "Consolidation", "Atelectasis", "Pleural Effusion"]
-TARGET_NAMES_5_INDEX = np.where(np.isin(TARGET_NAMES_12, TARGET_NAMES_5))[0]
+TARGET_NAMES_5_INDEX = np.where(np.isin(TARGET_NAMES_14, TARGET_NAMES_5))[0]
 
 class BertLabeler(nn.Module):
     def __init__(self, p=0.1, clinical=False, freeze_embeddings=False, pretrain_path=None, inference=False, **kwargs):
@@ -189,7 +189,7 @@ class F1CheXbert(nn.Module):
         cr = classification_report(
             y_true=refs12,
             y_pred=hyps12,
-            target_names=TARGET_NAMES_12,
+            target_names=TARGET_NAMES_14,
             output_dict=True,
             zero_division=1.0,
         )
