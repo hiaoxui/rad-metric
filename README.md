@@ -10,6 +10,13 @@ Supported metrics:
 - RadGraph
 - RaTEScore
 
+Major dependencies (will be handled by pip)
+```
+pytorch>=2.1
+transformers>=4.39.0
+ray
+```
+
 ## Setup
 
 ```bash
