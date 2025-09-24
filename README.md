@@ -1,6 +1,6 @@
 # rad-metric
 
-Composite metrics for chest X-ray report (CXR) generation.
+Composite metrics for chest X-ray report (CXR) generation with minimal dependencies and version caps on pytroch/transformers.
 
 Supported metrics:
 - BLEU
