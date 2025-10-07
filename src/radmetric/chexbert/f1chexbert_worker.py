@@ -9,11 +9,20 @@ from ..reward_server import RewardServer
 
 @ray.remote(num_gpus=1)
 class F1CheXbertWorker:
-    def __init__(self):
+    def __init__(self, batch_size: int):
+        self.batch_size = batch_size
         self.model = F1CheXbert()
 
     def compute(self, hyps: List[str], refs: List[str]) -> Tuple[List[int], List[int]]:
-        return self.model.batch_run(hyps=hyps, refs=refs)
+        assert len(hyps) == len(refs), "hypotheses and references must be same length"
+        total = len(hyps)
+        refs12, hyps12 = [], []
+        for start in range(0, total, self.batch_size):
+            end = min(start + self.batch_size, total)
+            refs12_, hyps12_ = self.model.batch_run(hyps=hyps[start:end], refs=refs[start:end])
+            refs12.extend(refs12_)
+            hyps12.extend(hyps12_)
+        return refs12, hyps12
 
 
 class F1CheXbertMetric(RewardServer):
@@ -22,7 +31,7 @@ class F1CheXbertMetric(RewardServer):
         super().__init__(num_workers=num_workers)
 
     def create_worker(self):
-        return F1CheXbertWorker.remote()
+        return F1CheXbertWorker.remote(batch_size=self.batch_size)
 
     def run_in_batch(self, hyps: List[str], refs: List[str]) -> Tuple[List[int], List[int]]:
         assert len(hyps) == len(refs), "hypotheses and references must be same length"
