@@ -33,5 +33,5 @@ class RewardServer:
                 futures.append(self.workers[i].compute.remote(hyps[start:end], refs[start:end]))
 
         results = ray.get(futures)
-        all_rewards = [reward for batch in results for reward in batch]
+        all_rewards = [float(reward) for batch in results for reward in batch]
         return all_rewards

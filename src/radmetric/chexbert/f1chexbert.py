@@ -184,7 +184,7 @@ class F1CheXbert(nn.Module):
         # Accuracy
         # Per element accuracy
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        pe_accuracy = (differing_labels == 0).astype(np.float32)
+        pe_accuracy = (differing_labels == 0).astype(np.float32).tolist()[0]
 
         cr = classification_report(
             y_true=refs12,
