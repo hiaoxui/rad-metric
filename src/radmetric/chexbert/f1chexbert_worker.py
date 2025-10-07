@@ -1,4 +1,5 @@
 from typing import Dict, Any, List, Optional, Tuple
+import math
 
 import ray
 
@@ -26,7 +27,7 @@ class F1CheXbertMetric(RewardServer):
     def run_in_batch(self, hyps: List[str], refs: List[str]) -> Tuple[List[int], List[int]]:
         assert len(hyps) == len(refs), "hypotheses and references must be same length"
         total = len(hyps)
-        batch_size = self.batch_size
+        batch_size = math.ceil(total / self.num_workers)
         futures = []
 
         for i in range(self.num_workers):
